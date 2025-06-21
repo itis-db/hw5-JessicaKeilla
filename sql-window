@@ -1,0 +1,118 @@
+CREATE TABLE transactions (
+                              id INT PRIMARY KEY,
+                              date DATE NOT NULL,
+                              amount DECIMAL(10, 2) NOT NULL
+);
+
+INSERT INTO transactions (id, date, amount) VALUES
+                                                (1, '2023-01-01', 100.00),
+                                                (2, '2023-01-01', 150.00),
+                                                (3, '2023-01-02', 200.00),
+                                                (4, '2023-01-03', 50.00),
+                                                (5, '2023-01-03', 75.00),
+                                                (6, '2023-01-04', 300.00),
+                                                (7, '2023-01-05', 125.00);
+
+
+CREATE TABLE products (
+                          id INT PRIMARY KEY,
+                          category VARCHAR(50) NOT NULL,
+                          price DECIMAL(10, 2) NOT NULL
+);
+
+INSERT INTO products (id, category, price) VALUES
+                                               (1, 'Electronics', 999.99),
+                                               (2, 'Electronics', 799.99),
+                                               (3, 'Electronics', 1199.99),
+                                               (4, 'Clothing', 49.99),
+                                               (5, 'Clothing', 29.99),
+                                               (6, 'Clothing', 79.99),
+                                               (7, 'Furniture', 599.99),
+                                               (8, 'Furniture', 899.99);
+
+CREATE TABLE temperature_logs (
+                                  log_time TIMESTAMP NOT NULL,
+                                  temperature DECIMAL(5, 2) NOT NULL
+);
+
+INSERT INTO temperature_logs (log_time, temperature) VALUES
+                                                         ('2023-01-01 08:00:00', 22.5),
+                                                         ('2023-01-01 12:00:00', 24.1),
+                                                         ('2023-01-01 16:00:00', 23.8),
+                                                         ('2023-01-02 08:00:00', 21.9),
+                                                         ('2023-01-02 12:00:00', 25.2),
+                                                         ('2023-01-02 16:00:00', 24.7),
+                                                         ('2023-01-03 08:00:00', 20.5),
+                                                         ('2023-01-03 12:00:00', 23.0),
+                                                         ('2023-01-03 16:00:00', 22.8);
+
+CREATE TABLE project_tasks (
+                               task_id INT PRIMARY KEY,
+                               project_id INT NOT NULL,
+                               start_date DATE NOT NULL
+);
+
+INSERT INTO project_tasks (task_id, project_id, start_date) VALUES
+                                                                (1, 101, '2023-01-01'),
+                                                                (2, 101, '2023-01-05'),
+                                                                (3, 101, '2023-01-10'),
+                                                                (4, 102, '2023-01-02'),
+                                                                (5, 102, '2023-01-03'),
+                                                                (6, 103, '2023-01-15'),
+                                                                (7, 103, '2023-01-20'),
+                                                                (8, 103, '2023-01-25'),
+                                                                (9, 103, '2023-01-18');
+
+
+
+-- Задание 1: Агрегация с нарастающим итогом
+SELECT
+    date,
+    amount,
+    SUM(amount) OVER (ORDER BY date) AS cumulative_amount
+FROM transactions
+ORDER BY date;
+
+-- Задание 2: Сравнение со средним по группе
+SELECT
+    id,
+    category,
+    price,
+    price - AVG(price) OVER (PARTITION BY category) AS price_deviation,
+    ROUND(AVG(price) OVER (PARTITION BY category), 2) AS category_avg_price
+FROM products
+ORDER BY category, id;
+
+-- Задание 3: Работа с границами окна
+
+SELECT
+    log_time,
+    temperature,
+    AVG(temperature) OVER (ORDER BY log_time ROWS BETWEEN 2 PRECEDING AND CURRENT ROW) AS moving_avg
+FROM temperature_logs
+ORDER BY log_time;
+
+
+-- Задание 4: Поиск первого и последнего значения
+WITH task_dates AS (
+    SELECT
+        project_id,
+        MIN(start_date) AS first_task_date,
+        MAX(start_date) AS last_task_date
+    FROM project_tasks
+    GROUP BY project_id
+)
+SELECT
+    pt.task_id,
+    pt.project_id,
+    pt.start_date,
+    td.first_task_date,
+    td.last_task_date
+FROM project_tasks pt
+         JOIN task_dates td ON pt.project_id = td.project_id
+ORDER BY pt.project_id, pt.start_date;
+
+
+
+
+
