@@ -1,0 +1,55 @@
+
+-- Задание 1: Агрегация с нарастающим итогом
+SELECT
+    date,
+    amount,
+    SUM(amount) OVER (ORDER BY date) AS cumulative_amount
+FROM transactions
+ORDER BY date;
+==========================================================================
+
+-- Задание 2: Сравнение со средним по группе
+SELECT
+    id,
+    category,
+    price,
+    price - AVG(price) OVER (PARTITION BY category) AS price_deviation,
+    ROUND(AVG(price) OVER (PARTITION BY category), 2) AS category_avg_price
+FROM products
+ORDER BY category, id;
+===========================================================================
+
+-- Задание 3: Работа с границами окна
+
+SELECT
+    log_time,
+    temperature,
+    AVG(temperature) OVER (ORDER BY log_time ROWS BETWEEN 2 PRECEDING AND CURRENT ROW) AS moving_avg
+FROM temperature_logs
+ORDER BY log_time;
+
+======================================================================================================
+
+-- Задание 4: Поиск первого и последнего значения
+WITH task_dates AS (
+    SELECT
+        project_id,
+        MIN(start_date) AS first_task_date,
+        MAX(start_date) AS last_task_date
+    FROM project_tasks
+    GROUP BY project_id
+)
+SELECT
+    pt.task_id,
+    pt.project_id,
+    pt.start_date,
+    td.first_task_date,
+    td.last_task_date
+FROM project_tasks pt
+         JOIN task_dates td ON pt.project_id = td.project_id
+ORDER BY pt.project_id, pt.start_date;
+
+
+
+
+
